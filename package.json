@@ -4,7 +4,8 @@
   "description": "<div align=\"center\">   <h3>🔍 AI Code Review That Thinks Like a Senior Developer</h3>   <p>Paste code or analyze GitHub repositories for instant AI-powered bug detection, performance suggestions, and quality scoring.</p> </div>",
   "main": "index.js",
   "scripts": {
-    "dev": "live-server"
+    "dev": "live-server",
+    "build": "echo 'build complete'"
   },
   "keywords": [],
   "author": "",
