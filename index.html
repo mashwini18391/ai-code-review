@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CodeLens AI — AI-Powered Code Review Platform. Get instant, expert-level code analysis for bugs, security vulnerabilities, and performance improvements.">
+  <title>CodeLens AI — Sign In</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236366f1'/%3E%3Ctext x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='monospace' font-weight='bold'%3E%26lt;/%26gt;%3C/text%3E%3C/svg%3E">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="login-page">
+    <!-- Animated Background -->
+    <div class="login-bg">
+      <div class="login-grid-lines"></div>
+    </div>
+
+    <div class="login-container">
+      <!-- Login Card -->
+      <div class="login-card">
+        <!-- Logo -->
+        <div class="login-logo" aria-hidden="true">
+          &lt;/&gt;
+        </div>
+
+        <!-- Title -->
+        <h1 class="login-title">CodeLens AI</h1>
+        <p class="login-subtitle">AI-powered code review that thinks like a senior developer</p>
+
+        <!-- Email Sign In Form -->
+        <form id="emailAuthForm" onsubmit="handleEmailAuth(event)" style="display:flex; flex-direction:column; gap:var(--space-4); margin-bottom:var(--space-4);">
+          <div class="form-group" style="margin-bottom:0; display:none;" id="nameFieldGroup">
+            <label class="form-label" style="text-align:left;">Full Name</label>
+            <input type="text" id="authName" class="form-input" placeholder="e.g. John Doe">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="text-align:left;">Email</label>
+            <input type="email" id="authEmail" class="form-input" placeholder="name@company.com" required>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="text-align:left;">Password</label>
+            <input type="password" id="authPassword" class="form-input" placeholder="••••••••" required minlength="6">
+          </div>
+          <button type="submit" id="emailSubmitBtn" class="btn btn-primary btn-lg" style="width:100%; justify-content:center;">Sign In</button>
+        </form>
+
+        <div style="text-align:center; margin-bottom:var(--space-6);">
+          <button type="button" class="btn btn-ghost btn-sm" id="toggleAuthModeBtn" onclick="toggleAuthMode()">Need an account? Sign up</button>
+        </div>
+
+        <div class="login-divider">Or continue with Google</div>
+
+        <!-- Google Sign In Button -->
+        <button id="googleSignInBtn" class="btn-google" onclick="handleGoogleSignIn()" aria-label="Sign in with Google">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span>Sign in with Google</span>
+        </button>
+
+        <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-4); text-align:center;">
+          By signing in, you agree to our Terms of Service and Privacy Policy.
+        </p>
+      </div>
+
+      <!-- Features Row -->
+      <div class="login-features">
+        <div class="login-feature">
+          <div class="login-feature-icon">🐛</div>
+          <div class="login-feature-title">Bug Detection</div>
+          <div class="login-feature-desc">Find hidden bugs and vulnerabilities</div>
+        </div>
+        <div class="login-feature">
+          <div class="login-feature-icon">⚡</div>
+          <div class="login-feature-title">Performance</div>
+          <div class="login-feature-desc">Optimize code for speed</div>
+        </div>
+        <div class="login-feature">
+          <div class="login-feature-icon">📊</div>
+          <div class="login-feature-title">Quality Score</div>
+          <div class="login-feature-desc">Rate your code quality 1-10</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Toggle (floating) -->
+  <button class="theme-toggle" onclick="toggleTheme()" style="position:fixed;top:20px;right:20px;z-index:100;" aria-label="Toggle theme">🌙</button>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Check if already logged in → redirect to dashboard
+    (async () => {
+      const session = await getSession();
+      if (session) {
+        const redirect = getUrlParam('redirect');
+        window.location.href = redirect ? decodeURIComponent(redirect) : '/dashboard.html';
+      }
+    })();
+
+    async function handleGoogleSignIn() {
+      const btn = document.getElementById('googleSignInBtn');
+      btn.classList.add('btn-loading');
+      btn.disabled = true;
+      await signInWithGoogle();
+      // OAuth redirects — the button state resets on page load
+    }
+
+    let isSignUpMode = false;
+    function toggleAuthMode() {
+      isSignUpMode = !isSignUpMode;
+      const nameGroup = document.getElementById('nameFieldGroup');
+      const submitBtn = document.getElementById('emailSubmitBtn');
+      const toggleBtn = document.getElementById('toggleAuthModeBtn');
+
+      if (isSignUpMode) {
+        nameGroup.style.display = 'block';
+        submitBtn.textContent = 'Create Account';
+        toggleBtn.textContent = 'Already have an account? Sign in';
+        document.getElementById('authName').setAttribute('required', 'true');
+      } else {
+        nameGroup.style.display = 'none';
+        submitBtn.textContent = 'Sign In';
+        toggleBtn.textContent = 'Need an account? Sign up';
+        document.getElementById('authName').removeAttribute('required');
+      }
+    }
+
+    async function handleEmailAuth(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const name = document.getElementById('authName').value.trim();
+      
+      const btn = document.getElementById('emailSubmitBtn');
+      btn.classList.add('btn-loading');
+      btn.disabled = true;
+
+      try {
+        if (isSignUpMode) {
+          await signUpWithEmail(email, password, name);
+          // Auto-login or verify email depending on Supabase settings.
+          // Reset UI state safely.
+        } else {
+          await signInWithEmail(email, password);
+        }
+      } catch (err) {
+        // Error toast handled in auth.js
+      } finally {
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

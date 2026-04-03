@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CodeLens AI Admin — Manage users, view analytics, and monitor platform usage.">
+  <title>Admin Panel — CodeLens AI</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236366f1'/%3E%3Ctext x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='monospace' font-weight='bold'%3E%26lt;/%26gt;%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">&lt;/&gt;</div>
+        <div class="sidebar-brand">
+          <span class="sidebar-brand-name">CodeLens AI</span>
+          <span class="sidebar-brand-tagline">Code Review</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Menu</div>
+          <a href="dashboard.html" class="nav-item">
+            <span class="nav-item-icon">📊</span>
+            <span class="nav-item-text">Dashboard</span>
+          </a>
+          <a href="input.html" class="nav-item">
+            <span class="nav-item-icon">✏️</span>
+            <span class="nav-item-text">New Review</span>
+          </a>
+          <a href="history.html" class="nav-item">
+            <span class="nav-item-icon">📋</span>
+            <span class="nav-item-text">History</span>
+          </a>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Admin</div>
+          <a href="admin.html" class="nav-item nav-admin active">
+            <span class="nav-item-icon">⚙️</span>
+            <span class="nav-item-text">Admin Panel</span>
+          </a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar"></div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name">Loading...</div>
+            <div class="sidebar-user-email">...</div>
+          </div>
+        </div>
+        <a href="#" class="nav-item sign-out-btn" style="margin-top: 8px;">
+          <span class="nav-item-icon">🚪</span>
+          <span class="nav-item-text">Sign Out</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- MAIN -->
+    <main class="app-main" id="appMain">
+      <header class="navbar">
+        <div class="navbar-left">
+          <button class="btn-icon mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('mobile-open'); document.getElementById('mobileOverlay').classList.toggle('active');" aria-label="Open menu">☰</button>
+          <h1 class="navbar-title">Admin Panel</h1>
+          <span class="badge badge-primary">Admin</span>
+        </div>
+        <div class="navbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+        </div>
+      </header>
+
+      <div class="page-content page-enter">
+        <!-- Stats Row -->
+        <div class="stats-grid stagger-children" id="adminStats">
+          <div class="stat-card"><div class="skeleton skeleton-stat"></div></div>
+          <div class="stat-card"><div class="skeleton skeleton-stat"></div></div>
+          <div class="stat-card"><div class="skeleton skeleton-stat"></div></div>
+          <div class="stat-card"><div class="skeleton skeleton-stat"></div></div>
+        </div>
+
+        <!-- Score Trend Chart -->
+        <div class="chart-container mb-8" id="chartSection">
+          <div class="chart-header">
+            <h3 class="chart-title">📈 Review Score Trends (Last 30 Days)</h3>
+          </div>
+          <canvas id="scoreChart" class="chart-canvas"></canvas>
+        </div>
+
+        <!-- Tabs: Users / Reviews -->
+        <div class="admin-tabs">
+          <div class="tabs" id="adminTabs">
+            <button class="tab-btn active" data-tab="users" onclick="switchAdminTab('users')">👥 Users</button>
+            <button class="tab-btn" data-tab="reviews" onclick="switchAdminTab('reviews')">📝 All Reviews</button>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="tab-content active" id="tab-users">
+          <div class="admin-table-container">
+            <div class="admin-table-header">
+              <span class="admin-table-title">All Users</span>
+              <span class="admin-table-count" id="usersCount">—</span>
+            </div>
+            <div style="overflow-x: auto;">
+              <table class="data-table" id="usersTable">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Reviews</th>
+                    <th>Avg Score</th>
+                    <th>Joined</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr><td colspan="6" style="text-align:center;padding:40px;">
+                    <div class="skeleton skeleton-text" style="width:200px;margin:0 auto"></div>
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews Table -->
+        <div class="tab-content" id="tab-reviews">
+          <div class="admin-table-container">
+            <div class="admin-table-header">
+              <span class="admin-table-title">All Reviews</span>
+              <span class="admin-table-count" id="reviewsCount">—</span>
+            </div>
+            <div style="overflow-x: auto;">
+              <table class="data-table" id="reviewsTable">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>User</th>
+                    <th>Language</th>
+                    <th>Score</th>
+                    <th>Bugs</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="reviewsTableBody">
+                  <tr><td colspan="7" style="text-align:center;padding:40px;">
+                    <div class="skeleton skeleton-text" style="width:200px;margin:0 auto"></div>
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

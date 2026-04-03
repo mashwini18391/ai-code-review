@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CodeLens AI — Browse and search your past code review history.">
+  <title>History — CodeLens AI</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236366f1'/%3E%3Ctext x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='monospace' font-weight='bold'%3E%26lt;/%26gt;%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">&lt;/&gt;</div>
+        <div class="sidebar-brand">
+          <span class="sidebar-brand-name">CodeLens AI</span>
+          <span class="sidebar-brand-tagline">Code Review</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Menu</div>
+          <a href="dashboard.html" class="nav-item">
+            <span class="nav-item-icon">📊</span>
+            <span class="nav-item-text">Dashboard</span>
+          </a>
+          <a href="input.html" class="nav-item">
+            <span class="nav-item-icon">✏️</span>
+            <span class="nav-item-text">New Review</span>
+          </a>
+          <a href="history.html" class="nav-item active">
+            <span class="nav-item-icon">📋</span>
+            <span class="nav-item-text">History</span>
+          </a>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Admin</div>
+          <a href="admin.html" class="nav-item nav-admin" style="display:none;">
+            <span class="nav-item-icon">⚙️</span>
+            <span class="nav-item-text">Admin Panel</span>
+          </a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar"></div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name">Loading...</div>
+            <div class="sidebar-user-email">...</div>
+          </div>
+        </div>
+        <a href="#" class="nav-item sign-out-btn" style="margin-top: 8px;">
+          <span class="nav-item-icon">🚪</span>
+          <span class="nav-item-text">Sign Out</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- MAIN -->
+    <main class="app-main" id="appMain">
+      <header class="navbar">
+        <div class="navbar-left">
+          <button class="btn-icon mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('mobile-open'); document.getElementById('mobileOverlay').classList.toggle('active');" aria-label="Open menu">☰</button>
+          <h1 class="navbar-title">Review History</h1>
+        </div>
+        <div class="navbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+        </div>
+      </header>
+
+      <div class="page-content page-enter">
+        <!-- Toolbar -->
+        <div class="history-toolbar">
+          <div class="search-bar" style="flex:1;max-width:400px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search reviews..." oninput="handleSearch(this.value)">
+          </div>
+          <div class="history-filters">
+            <select id="langFilter" class="form-select" style="width:auto;min-width:140px;" onchange="handleFilter()">
+              <option value="">All Languages</option>
+            </select>
+            <select id="sortFilter" class="form-select" style="width:auto;min-width:140px;" onchange="handleFilter()">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="highest">Highest Score</option>
+              <option value="lowest">Lowest Score</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="history-list" id="historyList">
+          <!-- Skeleton loaders -->
+          <div class="review-card" style="pointer-events:none">
+            <div class="skeleton skeleton-circle" style="width:48px;height:48px"></div>
+            <div style="flex:1"><div class="skeleton skeleton-text" style="width:60%;margin-bottom:8px"></div><div class="skeleton skeleton-text shorter"></div></div>
+          </div>
+          <div class="review-card" style="pointer-events:none">
+            <div class="skeleton skeleton-circle" style="width:48px;height:48px"></div>
+            <div style="flex:1"><div class="skeleton skeleton-text" style="width:50%;margin-bottom:8px"></div><div class="skeleton skeleton-text shorter"></div></div>
+          </div>
+          <div class="review-card" style="pointer-events:none">
+            <div class="skeleton skeleton-circle" style="width:48px;height:48px"></div>
+            <div style="flex:1"><div class="skeleton skeleton-text" style="width:70%;margin-bottom:8px"></div><div class="skeleton skeleton-text shorter"></div></div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display:none;"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/history.js"></script>
+</body>
+</html>
