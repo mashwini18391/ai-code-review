@@ -21,6 +21,16 @@ const EXCLUDED_DIRS = [
   '__pycache__', '.next', 'coverage', '.vscode', '.idea',
 ];
 
+/**
+ * Helper to create a JSON response with CORS headers
+ */
+function createJsonResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -28,13 +38,18 @@ Deno.serve(async (req) => {
 
   try {
     // Parse input
-    const { owner, repo, path = '' } = await req.json();
+    let owner, repo, path = '';
+    try {
+      const body = await req.json();
+      owner = body.owner;
+      repo = body.repo;
+      path = body.path || '';
+    } catch (e) {
+      return createJsonResponse({ error: 'Invalid JSON request body' }, 400);
+    }
 
     if (!owner || !repo) {
-      return new Response(
-        JSON.stringify({ error: 'Owner and repo are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return createJsonResponse({ error: 'Owner and repo are required' }, 400);
     }
 
     // Sanitize
@@ -44,17 +59,14 @@ Deno.serve(async (req) => {
     // Fetch files recursively
     const files = await fetchContents(safeOwner, safeRepo, path, 0);
 
-    return new Response(
-      JSON.stringify({ files, count: files.length }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createJsonResponse({ files, count: files.length });
 
   } catch (err: any) {
     console.error('fetch-github error:', err);
-    return new Response(
-      JSON.stringify({ error: err.message || 'Failed to fetch repository' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createJsonResponse({ 
+      error: err.message || 'Failed to fetch repository',
+      details: err.toString()
+    }, 500);
   }
 });
 
@@ -103,3 +115,4 @@ async function fetchContents(
 
   return files;
 }
+

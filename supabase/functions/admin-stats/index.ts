@@ -12,24 +12,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/**
+ * Helper to create a JSON response with CORS headers
+ */
+function createJsonResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Validate auth
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // ---- 1. Check Configuration ----
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+      console.error('Missing configuration in admin-stats');
+      return createJsonResponse({ error: 'Server configuration error' }, 500);
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // ---- 2. Validate Auth ----
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return createJsonResponse({ error: 'Unauthorized' }, 401);
+    }
 
     // Verify user identity
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
@@ -38,39 +51,41 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.error('Auth verification failed:', authError);
+      return createJsonResponse({ error: 'Invalid token' }, 401);
     }
 
-    // Check admin role using service role (bypasses RLS)
+    // ---- 3. Check Admin Role ----
+    // Use service role (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
 
-    if (!profile || profile.role !== 'admin') {
-      return new Response(
-        JSON.stringify({ error: 'Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (profileError || !profile || profile.role !== 'admin') {
+      return createJsonResponse({ error: 'Admin access required' }, 403);
     }
 
-    // Fetch all profiles
-    const { data: profiles } = await supabaseAdmin
+    // ---- 4. Fetch Analytics ----
+    // Fetch profiles
+    const { data: profiles, error: pError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
 
-    // Fetch all reviews
-    const { data: reviews } = await supabaseAdmin
+    // Fetch reviews
+    const { data: reviews, error: rError } = await supabaseAdmin
       .from('reviews')
       .select('*')
       .order('created_at', { ascending: false });
+
+    if (pError || rError) {
+      console.error('Database fetch error:', pError || rError);
+      return createJsonResponse({ error: 'Failed to fetch analytics data' }, 500);
+    }
 
     const allProfiles = profiles || [];
     const allReviews = reviews || [];
@@ -83,9 +98,6 @@ Deno.serve(async (req) => {
       : 0;
 
     // Reviews per day (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
     const dailyStats = [];
     for (let i = 29; i >= 0; i--) {
       const d = new Date();
@@ -124,25 +136,20 @@ Deno.serve(async (req) => {
       langDist[lang] = (langDist[lang] || 0) + 1;
     });
 
-    return new Response(
-      JSON.stringify({
-        totalUsers,
-        totalReviews,
-        avgScore: Math.round(avgScore * 10) / 10,
-        dailyStats,
-        scoreDistribution,
-        languageDistribution: langDist,
-        recentUsers: allProfiles.slice(0, 20),
-        recentReviews: allReviews.slice(0, 50),
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createJsonResponse({
+      totalUsers,
+      totalReviews,
+      avgScore: Math.round(avgScore * 10) / 10,
+      dailyStats,
+      scoreDistribution,
+      languageDistribution: langDist,
+      recentUsers: allProfiles.slice(0, 20),
+      recentReviews: allReviews.slice(0, 50),
+    });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('admin-stats error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createJsonResponse({ error: 'Internal server error', details: err.message }, 500);
   }
 });
+

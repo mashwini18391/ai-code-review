@@ -135,6 +135,9 @@ async function submitForAnalysis(code, language, title, sourceType, sourceUrl) {
 
   const overlay = showLoadingOverlay('Analyzing Your Code', 'Our AI is reviewing your code like a senior developer...');
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
   try {
     const headers = await getAuthHeader();
     const sanitizedCode = sanitizeCode(code);
@@ -142,6 +145,7 @@ async function submitForAnalysis(code, language, title, sourceType, sourceUrl) {
     const response = await fetch(`${APP_CONFIG.functionsUrl}/analyze-code`, {
       method: 'POST',
       headers: headers,
+      signal: controller.signal,
       body: JSON.stringify({
         code: sanitizedCode,
         language: language,
@@ -150,6 +154,8 @@ async function submitForAnalysis(code, language, title, sourceType, sourceUrl) {
         source_url: sourceUrl,
       }),
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
@@ -161,30 +167,20 @@ async function submitForAnalysis(code, language, title, sourceType, sourceUrl) {
     if (result.review_id) {
       showToast('Analysis complete!', 'success');
       
-      // Convert to unified workspace view instead of redirecting
-      if (document.getElementById('workspaceContainer')) {
-        document.getElementById('workspaceContainer').classList.add('split-mode');
-        document.getElementById('workspaceResultsPane').style.display = 'block';
-        document.getElementById('resultsLoading').style.display = 'block';
-        
-        // Update URL cleanly without reloading
-        window.history.pushState({}, '', `?id=${result.review_id}`);
-        
-        // Let results.js load and render the data into the right pane
-        if (typeof loadReview === 'function') {
-          loadReview(result.review_id);
-        }
-      } else {
-        // Fallback for older pages
-        window.location.href = `results.html?id=${result.review_id}`;
-      }
+      // Redirect to the dedicated full-screen results page
+      window.location.href = `results.html?id=${result.review_id}`;
     } else {
       throw new Error('No review ID returned');
     }
 
   } catch (err) {
     console.error('Analysis error:', err);
-    showToast(err.message || 'Analysis failed. Please try again.', 'error');
+    if (err.name === 'AbortError') {
+      showToast('Analysis timed out. Try with a smaller code snippet or wait a moment.', 'warning');
+    } else {
+      showToast(err.message || 'Analysis failed. Please try again.', 'error');
+    }
+  } finally {
     hideLoadingOverlay();
     btn.classList.remove('btn-loading');
     btn.disabled = false;
